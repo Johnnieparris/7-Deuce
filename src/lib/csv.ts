@@ -1,3 +1,9 @@
+import {
+  detectDateOrder,
+  hasClockTime,
+  resolveSessionTimes,
+  sessionDateCandidates,
+} from "@/lib/datetime";
 import { computeNet } from "@/lib/money";
 import type { SessionInput, SessionKind } from "@/lib/types";
 
@@ -9,12 +15,19 @@ function normalizeHeader(value: string) {
 }
 
 const HEADER_MAP: Record<string, string> = {
-  date: "startedAt",
-  time: "startedAt",
+  date: "date",
+  time: "time",
   start: "startedAt",
   started: "startedAt",
   "start time": "startedAt",
+  "start date": "startedAt",
   datetime: "startedAt",
+  end: "endedAt",
+  ended: "endedAt",
+  "end date": "endedAt",
+  "end time": "endedAt",
+  "finish time": "endedAt",
+  "stop time": "endedAt",
   type: "kind",
   kind: "kind",
   "game type": "kind",
@@ -39,20 +52,28 @@ const HEADER_MAP: Record<string, string> = {
   "dealer tip": "tips",
   fees: "fees",
   rake: "fees",
+  "entry fee": "fees",
   prize: "prize",
   winnings: "prize",
   placement: "placement",
   place: "placement",
   finish: "placement",
+  position: "placement",
   "field size": "fieldSize",
   field: "fieldSize",
   entries: "fieldSize",
+  "number of players": "fieldSize",
   duration: "durationMin",
   "duration min": "durationMin",
   "duration mins": "durationMin",
   minutes: "durationMin",
   hours: "hours",
+  hrs: "hours",
+  hour: "hours",
+  "hours played": "hours",
+  "time played": "hours",
   length: "durationMin",
+  break: "breakMin",
   breaks: "breakMin",
   "break min": "breakMin",
   "breaks min": "breakMin",
@@ -133,33 +154,64 @@ function parseKind(value: string | undefined): SessionKind {
   return "cash";
 }
 
-function parseDate(value: string | undefined) {
-  if (!value?.trim()) return new Date();
-  const parsed = new Date(value);
-  if (!Number.isNaN(parsed.getTime())) return parsed;
-  const excel = Number(value);
-  if (Number.isFinite(excel) && excel > 20000 && excel < 80000) {
-    const utc = Date.UTC(1899, 11, 30) + excel * 86400000;
-    return new Date(utc);
+function combineDateAndTime(dateValue: string, timeValue: string) {
+  if (!dateValue) return timeValue;
+  if (!timeValue || hasClockTime(dateValue)) return dateValue;
+  return `${dateValue} ${timeValue}`;
+}
+
+function nextAnchorStart(startRaws: string[], fromIndex: number) {
+  for (let i = fromIndex + 1; i < startRaws.length; i += 1) {
+    const options = sessionDateCandidates(startRaws[i]);
+    if (options.length === 1) return options[0];
   }
-  return new Date();
+  return null;
 }
 
 export function parseSessionCsv(text: string): SessionInput[] {
   const rows = parseCsv(text.replace(/^\uFEFF/, ""));
   if (rows.length < 2) return [];
   const headers = rows[0].map((header) => HEADER_MAP[normalizeHeader(header)] ?? normalizeHeader(header));
-  const sessions: SessionInput[] = [];
+  const records: Record<string, string>[] = [];
 
   for (const raw of rows.slice(1)) {
     const record: Record<string, string> = {};
     headers.forEach((header, index) => {
       if (header) record[header] = (raw[index] ?? "").trim();
     });
+    const startedRaw = combineDateAndTime(record.startedAt || record.date || "", record.time || "");
+    record.startedAt = startedRaw;
+    records.push(record);
+  }
 
+  const startRaws = records.map((record) => record.startedAt);
+  const dateOrder = detectDateOrder([
+    ...startRaws,
+    ...records.map((record) => record.endedAt || ""),
+  ]);
+
+  const sessions: SessionInput[] = [];
+  let prevStart: Date | null = null;
+
+  for (let index = 0; index < records.length; index += 1) {
+    const record = records[index];
     const hours = parseNumber(record.hours);
     let durationMin = parseNumber(record.durationMin);
     if (!durationMin && hours) durationMin = hours * 60;
+    const breakMin = parseNumber(record.breakMin);
+
+    const times = resolveSessionTimes(
+      record.startedAt,
+      record.endedAt || "",
+      prevStart,
+      nextAnchorStart(startRaws, index),
+      dateOrder
+    );
+    if (record.startedAt) prevStart = times.start;
+
+    if (!durationMin && times.minutes) {
+      durationMin = Math.max(0, times.minutes - breakMin);
+    }
 
     const kind = parseKind(record.kind);
     const buyIn = parseNumber(record.buyIn);
@@ -171,9 +223,10 @@ export function parseSessionCsv(text: string): SessionInput[] {
 
     let next: SessionInput = {
       kind,
-      startedAt: parseDate(record.startedAt).toISOString(),
+      startedAt: times.start.toISOString(),
+      endedAt: times.end ? times.end.toISOString() : null,
       durationMin,
-      breakMin: parseNumber(record.breakMin),
+      breakMin,
       game: record.game || "NLH",
       stakes: record.stakes || null,
       venue: record.venue || null,

@@ -33,7 +33,7 @@ export function SessionList({ sessions, empty }: { sessions: SessionDto[]; empty
                 </Badge>
               </div>
               <p className="truncate text-xs text-muted-foreground">
-                {format(new Date(session.startedAt), "EEE, MMM d")} · {formatDuration(session.durationMin)}
+                {format(new Date(session.startedAt), "EEE, MMM d, h:mm a")} · {formatDuration(session.durationMin)}
                 {session.venue ? ` · ${session.venue}` : ""}
               </p>
             </div>
