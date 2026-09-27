@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { NativeInput, NativeSelect } from "@/components/field";
-import { CASH_STAKES } from "@/lib/types";
+import { CASH_STAKES, normalizeStakes } from "@/lib/types";
 
 const CUSTOM = "custom";
 
@@ -11,7 +11,7 @@ function isPreset(value: string) {
 }
 
 export function StakesSelect({ defaultValue = "1/2" }: { defaultValue?: string | null }) {
-  const initial = defaultValue ?? "1/2";
+  const initial = normalizeStakes(defaultValue) ?? "1/2";
   const startsCustom = !isPreset(initial);
   const [initialSmall, initialBig] = startsCustom ? initial.split("/") : ["", ""];
 

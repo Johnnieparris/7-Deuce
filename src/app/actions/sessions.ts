@@ -8,7 +8,7 @@ import { db } from "@/lib/db";
 import { computeNet, round2 } from "@/lib/money";
 import { getLiveSession, sessionMoneyFields } from "@/lib/sessions";
 import { liveTiming } from "@/lib/timing";
-import type { SessionInput, SessionKind } from "@/lib/types";
+import { normalizeStakes, type SessionInput, type SessionKind } from "@/lib/types";
 
 function revalidateAll() {
   revalidatePath("/");
@@ -95,7 +95,7 @@ export async function startLiveSession(formData: FormData): Promise<ActionResult
       status: "live",
       startedAt: new Date(),
       game: String(formData.get("game") ?? "NLH") || "NLH",
-      stakes: String(formData.get("stakes") ?? "") || null,
+      stakes: normalizeStakes(String(formData.get("stakes") ?? "")),
       venue: String(formData.get("venue") ?? "") || null,
     },
   });

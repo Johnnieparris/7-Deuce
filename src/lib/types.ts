@@ -51,6 +51,22 @@ export type SessionInput = {
 
 export const GAMES = ["NLH", "PLO", "PLO5", "Mixed", "Stud", "Draw", "Other"] as const;
 
+function formatBlind(value: number) {
+  if (Number.isInteger(value)) return String(value);
+  const fixed = value.toFixed(2);
+  return Number(fixed) === value ? fixed : String(value);
+}
+
+export function normalizeStakes(value?: string | null) {
+  const trimmed = value?.trim();
+  if (!trimmed) return null;
+  const parts = trimmed.replace(/\$/g, "").split("/").map((part) => part.trim());
+  if (parts.length < 2 || parts.some((part) => part === "" || !Number.isFinite(Number(part)))) {
+    return trimmed;
+  }
+  return parts.map((part) => formatBlind(Number(part))).join("/");
+}
+
 export const CASH_STAKES = [
   "0.05/0.10",
   "0.10/0.10",
