@@ -11,7 +11,8 @@ import {
 } from "@/app/actions/sessions";
 import { SessionForm } from "@/components/session-form";
 import { Field, NativeInput, NativeSelect } from "@/components/field";
-import { CASH_STAKES, GAMES, type SessionDto, type SessionKind } from "@/lib/types";
+import { StakesSelect } from "@/components/stakes-select";
+import { GAMES, type SessionDto, type SessionKind } from "@/lib/types";
 import { formatClock } from "@/lib/money";
 import { liveTiming } from "@/lib/timing";
 import { cn } from "cn";
@@ -83,13 +84,7 @@ export function LiveTimer({ live }: { live: SessionDto | null }) {
           </Field>
           <Field label={kind === "tournament" ? "Buy-in level" : "Stakes"}>
             {kind === "cash" ? (
-              <NativeSelect name="stakes" defaultValue="1/2">
-                {CASH_STAKES.map((stakes) => (
-                  <option key={stakes} value={stakes}>
-                    {stakes}
-                  </option>
-                ))}
-              </NativeSelect>
+              <StakesSelect />
             ) : (
               <NativeInput name="stakes" placeholder="$150" />
             )}

@@ -5,8 +5,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Field, NativeInput, NativeSelect } from "@/components/field";
 import { computeNet } from "@/lib/money";
 import { fromDateTimeLocal, toDateTimeLocal } from "@/lib/datetime";
-import { CASH_STAKES, GAMES, type SessionDto, type SessionKind } from "@/lib/types";
+import { GAMES, type SessionDto, type SessionKind } from "@/lib/types";
 import { MoneyText } from "@/components/money-text";
+import { StakesSelect } from "@/components/stakes-select";
 import { cn } from "cn";
 
 type Props = {
@@ -115,13 +116,7 @@ export function SessionForm({
         </Field>
         <Field label={kind === "tournament" ? "Buy-in level" : "Stakes"}>
           {kind === "cash" ? (
-            <NativeSelect name="stakes" defaultValue={session?.stakes ?? "1/2"}>
-              {CASH_STAKES.map((stakes) => (
-                <option key={stakes} value={stakes}>
-                  {stakes}
-                </option>
-              ))}
-            </NativeSelect>
+            <StakesSelect defaultValue={session?.stakes} />
           ) : (
             <NativeInput name="stakes" placeholder="$150" defaultValue={session?.stakes ?? ""} />
           )}

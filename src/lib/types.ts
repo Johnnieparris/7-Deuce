@@ -51,4 +51,14 @@ export type SessionInput = {
 
 export const GAMES = ["NLH", "PLO", "PLO5", "Mixed", "Stud", "Draw", "Other"] as const;
 
-export const CASH_STAKES = ["0.25/0.50", "0.50/1", "1/2", "1/3", "2/5", "5/10", "10/20", "Other"] as const;
+export const CASH_STAKES = [
+  "0.05/0.10",
+  "0.10/0.10",
+  "0.25/0.50",
+  "0.50/1",
+  "1/2",
+  "1/3",
+  "2/5",
+  "5/10",
+  "10/20",
+] as const;
