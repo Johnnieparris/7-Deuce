@@ -2,7 +2,7 @@ import type { PokerSession, SessionBreak } from "@prisma/client";
 import { db } from "@/lib/db";
 import { computeNet, round2 } from "@/lib/money";
 import { liveTiming } from "@/lib/timing";
-import { normalizeStakes, type SessionDto, type SessionInput, type SessionKind } from "@/lib/types";
+import { normalizeGame, normalizeStakes, type SessionDto, type SessionInput, type SessionKind } from "@/lib/types";
 
 export { liveTiming };
 
@@ -70,7 +70,7 @@ export function sessionMoneyFields(input: SessionInput) {
     endedAt: input.endedAt ? new Date(input.endedAt) : null,
     durationMin: Math.max(0, Math.round(input.durationMin)),
     breakMin: Math.max(0, Math.round(input.breakMin)),
-    game: input.game.trim() || "NLH",
+    game: normalizeGame(input.game),
     stakes: normalizeStakes(input.stakes),
     venue: emptyToNull(input.venue),
     buyIn: round2(input.buyIn),
