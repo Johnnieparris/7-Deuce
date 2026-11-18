@@ -7,16 +7,17 @@ import {
   endBreakForm,
   startBreakForm,
   startLiveSessionForm,
+  updateLiveBuyInForm,
   type ActionResult,
 } from "@/app/actions/sessions";
 import { SessionForm } from "@/components/session-form";
 import { Field, NativeInput, NativeSelect } from "@/components/field";
 import { StakesSelect } from "@/components/stakes-select";
 import { GAMES, type SessionDto, type SessionKind } from "@/lib/types";
-import { formatClock } from "@/lib/money";
+import { formatClock, formatMoney } from "@/lib/money";
 import { liveTiming } from "@/lib/timing";
 import { cn } from "cn";
-import { Pause, Play, Square } from "lucide-react";
+import { Pause, Play, Plus, Square } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -38,6 +39,8 @@ export function LiveTimer({ live }: { live: SessionDto | null }) {
   const [resumeState, resumeAction, resumePending] = useActionState(endBreakForm, null);
   const [completeState, completeAction, completePending] = useActionState(completeLiveSessionForm, null);
   const [abandonState, abandonAction, abandonPending] = useActionState(abandonLiveSessionForm, null);
+  const [buyInState, buyInAction, buyInPending] = useActionState(updateLiveBuyInForm, null);
+  const liveBuyIn = live?.buyIn ?? 0;
 
   useEffect(() => {
     if (!live) return;
@@ -52,6 +55,7 @@ export function LiveTimer({ live }: { live: SessionDto | null }) {
     actionError(resumeState) ||
     actionError(completeState) ||
     actionError(abandonState);
+  const buyInError = actionError(buyInState);
 
   if (!live) {
     return (
@@ -90,9 +94,14 @@ export function LiveTimer({ live }: { live: SessionDto | null }) {
             )}
           </Field>
         </div>
-        <Field label="Venue">
-          <NativeInput name="venue" placeholder="Where are you playing?" />
-        </Field>
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="Venue">
+            <NativeInput name="venue" placeholder="Where are you playing?" />
+          </Field>
+          <Field label="Buy-in">
+            <NativeInput name="buyIn" type="number" inputMode="decimal" min={0} step="0.01" placeholder="0" />
+          </Field>
+        </div>
         {error ? <p className="text-sm text-destructive">{error}</p> : null}
         <button
           type="submit"
@@ -155,6 +164,45 @@ export function LiveTimer({ live }: { live: SessionDto | null }) {
           End session
         </button>
       </div>
+
+      <form key={liveBuyIn} action={buyInAction} className="grid gap-3 rounded-2xl border border-border/80 bg-muted/40 p-4">
+        <div className="flex items-baseline justify-between">
+          <span className="text-sm text-muted-foreground">Total bought in</span>
+          <span className="font-heading text-2xl font-semibold tabular-nums">{formatMoney(liveBuyIn)}</span>
+        </div>
+        <div className="grid grid-cols-[1fr_auto_auto] gap-2">
+          <NativeInput
+            name="amount"
+            type="number"
+            inputMode="decimal"
+            min={0}
+            step="0.01"
+            placeholder="Amount"
+            aria-label="Buy-in amount"
+            required
+          />
+          <button
+            type="submit"
+            name="mode"
+            value="add"
+            disabled={buyInPending}
+            className="flex h-11 items-center gap-1 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground disabled:opacity-60"
+          >
+            <Plus className="size-4" />
+            Add
+          </button>
+          <button
+            type="submit"
+            name="mode"
+            value="set"
+            disabled={buyInPending}
+            className="h-11 rounded-lg border border-border bg-secondary px-4 text-sm font-semibold disabled:opacity-60"
+          >
+            Set total
+          </button>
+        </div>
+        {buyInError ? <p className="text-sm text-destructive">{buyInError}</p> : null}
+      </form>
 
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
 

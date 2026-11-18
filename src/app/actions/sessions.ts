@@ -97,10 +97,38 @@ export async function startLiveSession(formData: FormData): Promise<ActionResult
       game: normalizeGame(String(formData.get("game") ?? "")),
       stakes: normalizeStakes(String(formData.get("stakes") ?? "")),
       venue: String(formData.get("venue") ?? "") || null,
+      buyIn: round2(Math.max(0, numberField(formData, "buyIn"))),
     },
   });
   revalidateAll();
   return { ok: true, id: session.id };
+}
+
+export async function updateLiveBuyIn(formData: FormData): Promise<ActionResult> {
+  const user = await requireUser();
+  const live = await getLiveSession(user.id);
+  if (!live) return { ok: false, error: "No live session" };
+
+  const raw = String(formData.get("amount") ?? "").trim();
+  const amount = Number(raw);
+  if (!raw || !Number.isFinite(amount) || amount < 0) {
+    return { ok: false, error: "Enter a valid amount" };
+  }
+  const mode = String(formData.get("mode") ?? "add") === "set" ? "set" : "add";
+  const buyIn = round2(mode === "set" ? amount : live.buyIn + amount);
+
+  await db.pokerSession.update({ where: { id: live.id }, data: { buyIn } });
+  revalidateAll();
+  return { ok: true, id: live.id };
+}
+
+export async function updateLiveBuyInForm(
+  _prev: ActionResult | null,
+  formData: FormData
+): Promise<ActionResult> {
+  const result = await updateLiveBuyIn(formData);
+  if (result.ok) redirect("/play");
+  return result;
 }
 
 export async function startBreakAction(): Promise<ActionResult> {
