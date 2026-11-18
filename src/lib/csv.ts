@@ -5,7 +5,7 @@ import {
   sessionDateCandidates,
 } from "@/lib/datetime";
 import { computeNet } from "@/lib/money";
-import type { SessionInput, SessionKind } from "@/lib/types";
+import { normalizeGame, type SessionInput, type SessionKind } from "@/lib/types";
 
 function normalizeHeader(value: string) {
   return value
@@ -227,7 +227,7 @@ export function parseSessionCsv(text: string): SessionInput[] {
       endedAt: times.end ? times.end.toISOString() : null,
       durationMin,
       breakMin,
-      game: record.game || "NLH",
+      game: normalizeGame(record.game),
       stakes: record.stakes || null,
       venue: record.venue || null,
       buyIn,

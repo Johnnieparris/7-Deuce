@@ -67,6 +67,30 @@ export function normalizeStakes(value?: string | null) {
   return parts.map((part) => formatBlind(Number(part))).join("/");
 }
 
+const NLH_KEYS = new Set([
+  "nlh",
+  "nlhe",
+  "holdem",
+  "hold em",
+  "texas holdem",
+  "texas hold em",
+  "nl holdem",
+  "nl hold em",
+  "no limit holdem",
+  "no limit hold em",
+]);
+
+export function normalizeGame(value?: string | null) {
+  const trimmed = value?.trim();
+  if (!trimmed) return "NLH";
+  const key = trimmed
+    .toLowerCase()
+    .replace(/[‘’']/g, "")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+  return NLH_KEYS.has(key) ? "NLH" : trimmed;
+}
+
 export const CASH_STAKES = [
   "0.05/0.10",
   "0.10/0.10",

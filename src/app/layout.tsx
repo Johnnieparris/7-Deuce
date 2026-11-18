@@ -20,7 +20,9 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     title: "7-Deuce",
-    statusBarStyle: "black-translucent",
+    // "black" keeps content below the iOS status bar; "black-translucent" draws
+    // the page underneath it, hiding the sticky header behind the clock.
+    statusBarStyle: "black",
   },
 };
 

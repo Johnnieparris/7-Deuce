@@ -1,6 +1,6 @@
 import { startOfDay, startOfMonth, subDays } from "date-fns";
 import { hourlyRate, round2 } from "@/lib/money";
-import { normalizeStakes, type SessionDto, type SessionKind } from "@/lib/types";
+import { normalizeGame, normalizeStakes, type SessionDto, type SessionKind } from "@/lib/types";
 
 export type StatsRange = "7d" | "30d" | "90d" | "all";
 export type StatsKind = "all" | SessionKind;
@@ -76,13 +76,14 @@ export function computeStats(
     if (session.kind === "cash") cashNet = round2(cashNet + session.net);
     else tournamentNet = round2(tournamentNet + session.net);
 
-    const game = session.game || "Other";
+    const game = normalizeGame(session.game);
     const gameEntry = gameMap.get(game) ?? { net: 0, count: 0 };
     gameEntry.net = round2(gameEntry.net + session.net);
     gameEntry.count += 1;
     gameMap.set(game, gameEntry);
 
-    const stakes = normalizeStakes(session.stakes) || "Unspecified";
+    const stakes =
+      session.kind === "tournament" ? "Tournament" : normalizeStakes(session.stakes) || "Unspecified";
     const stakesEntry = stakesMap.get(stakes) ?? { net: 0, count: 0 };
     stakesEntry.net = round2(stakesEntry.net + session.net);
     stakesEntry.count += 1;
